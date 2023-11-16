@@ -56,8 +56,8 @@
 						<th></th>
 						<th>page</th>
 						<th>word count</th>
-						<th>number of notices</th>
 						<th>headings</th>
+						<th>number of notices</th>
 					</tr>
 				</thead>
 
@@ -68,7 +68,6 @@
 					<td><i class="material-icons" id="i{{ outer_loop.index }}">keyboard_arrow_down</i></td>
 					<td><a href="{{ page['url'] }}" target ="_blank">{{page['url']}}</a></td>
 					<td>{{page['word_count']}}</td>
-					<td>{{page["warnings"]|length}}</td>
 					<td>
 						<ul>
 							{% for heading, value in page.headings.items() %}
@@ -76,9 +75,10 @@
 							{% endfor %}
 						</ul>
 					</td>
+					<td>{{page["warnings"]|length}}</td>
 				</tr>
 				<tr id="{{ outer_loop.index }}" class="error-detail">
-					<td colspan="5"><p>{{page["title"]}}</p><p>{{page["description"]}}</p><ul>{% for err in page["warnings"] %}<li>{{err|e}}</li>{% endfor %}</ul></td>
+					<td colspan="4"><p>{{page["title"]}}</p><p>{{page["description"]}}</p><ul>{% for err in page["warnings"] %}<li>{{err|e}}</li>{% endfor %}</ul></td>
 				</tr>
 				{% endfor %}
 			</tbody>
