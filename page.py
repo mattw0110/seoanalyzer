@@ -3,6 +3,7 @@ import json
 import os
 import re
 
+from requests.exceptions import InvalidSchema
 from bs4 import BeautifulSoup
 import requests
 from collections import Counter
@@ -11,7 +12,7 @@ from string import punctuation
 from urllib.parse import urlsplit
 from urllib3.exceptions import HTTPError
 
-from seoanalyzer.http import http
+from seoanalyzer.http_module import http_module as http
 from seoanalyzer.stemmer import stem
 
 # This list of English stop words is taken from the "Glasgow Information
@@ -144,8 +145,12 @@ class Page():
         return f'{self.base_domain.scheme}://{domain}{relative_path}'
 
     def get_soup(self):
-        response = requests.get(self.url)
-        return BeautifulSoup(response.text, 'html.parser')
+        try:
+            response = requests.get(self.url)
+            return BeautifulSoup(response.text, 'html.parser')
+        except InvalidSchema:
+            print(f"Invalid URL: {self.url}")
+            return None
 
     def talk(self):
         """
@@ -205,9 +210,12 @@ class Page():
         except ValueError as _:
             dom = lh.fromstring(bs.encode('utf-8'))
         for tag, xpath in HEADING_TAGS_XPATHS.items():
-            value = [heading.text_content() for heading in dom.xpath(xpath)]
+            value = [heading.text_content().strip()
+                     for heading in dom.xpath(xpath)]
             if value:
-                self.headings.update({tag: value})
+                # Join the list elements into a comma-separated string
+                value_str = ', '.join(value)
+                self.headings.update({tag: value_str})
 
     def analyze_additional_tags(self, bs):
         """

@@ -6,7 +6,7 @@ import time
 
 import socket
 
-from seoanalyzer.http import http
+from seoanalyzer.http_module import http_module as http
 from seoanalyzer.page import Page
 
 

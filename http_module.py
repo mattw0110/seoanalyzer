@@ -16,5 +16,5 @@ class Http():
     def get(self, url):
         return self.http.request('GET', url)
 
-http = Http()
-        
+
+http_module = Http()
