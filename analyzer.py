@@ -1,5 +1,6 @@
 import json
 import time
+import sys  # import the sys module
 
 from operator import itemgetter
 from seoanalyzer.website import Website
@@ -62,3 +63,11 @@ def analyze(url, sitemap_url=None, analyze_headings=True, analyze_extra_tags=Tru
     output['total_time'] = calc_total_time()
 
     return output
+
+
+# Check if a command line argument was provided
+if len(sys.argv) > 1:
+    url = sys.argv[1]  # Get the URL from the command line arguments
+    analyze(url)  # Call the analyze function with the URL
+else:
+    print("Please provide a URL as a command line argument.")
