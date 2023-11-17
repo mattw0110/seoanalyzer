@@ -82,23 +82,11 @@
 						<p>{{page["title"]}}</p>
 						<h3>Meta Description</h3>
 						<p>{{page["description"]}}</p>
-						<h3>Generic Anchors</h3>
-						{% if page['generic_text'] %}
-							<ul>
-								{% for text in page['generic_text'] %}
-									<li>{{ text }}</li>
-								{% endfor %}
-							</ul>
-						{% else %}
-							<p>No generic anchors found.</p>
-						{% endif %}
-					<h3>Notices {{page["warnings"]|length}}</h3>
-					<ul>
-						{% for err in page["warnings"] %}
-						<li>{{err|e}}</li>
+						<h3>Generic Anchors</h3><ul>
+						{% for text in page.generic_text %}
+						<li>{{ text }}</li>
 						{% endfor %}
-					</ul>
-				</td>
+					</ul><h3>Notices {{page["warnings"]|length}}</h3><ul>{% for err in page["warnings"] %}<li>{{err|e}}</li>{% endfor %}</ul></td>
 				</tr>
 				{% endfor %}
 			</tbody>

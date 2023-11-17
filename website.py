@@ -2,14 +2,16 @@ from collections import Counter
 from collections import defaultdict
 from urllib.parse import urlsplit
 from xml.dom import minidom
+import time
 
 import socket
 
 from seoanalyzer.http import http
 from seoanalyzer.page import Page
 
+
 class Website():
-    def __init__(self, base_url, sitemap, analyze_headings, analyze_extra_tags, follow_links):
+    def __init__(self, base_url, sitemap, analyze_headings, analyze_extra_tags, follow_links, analyze_generic_text):
         self.base_url = base_url
         self.sitemap = sitemap
         self.analyze_headings = analyze_headings
@@ -22,6 +24,7 @@ class Website():
         self.bigrams = Counter()
         self.trigrams = Counter()
         self.content_hashes = defaultdict(set)
+        self.analyze_generic_text = analyze_generic_text
 
     def check_dns(self, url_to_check):
         try:
@@ -45,6 +48,8 @@ class Website():
 
         return ''.join(rc)
 
+    import time
+
     def crawl(self):
         if self.sitemap:
             page = http.get(self.sitemap)
@@ -52,7 +57,8 @@ class Website():
                 xmldoc = minidom.parseString(page.data.decode('utf-8'))
                 sitemap_urls = xmldoc.getElementsByTagName('loc')
                 for url in sitemap_urls:
-                    self.page_queue.append(self.get_text_from_xml(url.childNodes))
+                    self.page_queue.append(
+                        self.get_text_from_xml(url.childNodes))
             elif self.sitemap.endswith('txt'):
                 sitemap_urls = page.data.decode('utf-8').split('\n')
                 for url in sitemap_urls:
@@ -61,12 +67,12 @@ class Website():
         self.page_queue.append(self.base_url)
 
         for url in self.page_queue:
-            if url in self.crawled_urls:
+            if url in self.crawled_urls or url.startswith('mailto:') or url.startswith('tel:'):
                 continue
 
             page = Page(url=url, base_domain=self.base_url,
                         analyze_headings=self.analyze_headings,
-                        analyze_extra_tags=self.analyze_extra_tags)
+                        analyze_extra_tags=self.analyze_extra_tags, analyze_generic_text=self.analyze_generic_text)
 
             if page.parsed_url.netloc != page.base_domain.netloc:
                 continue
@@ -91,3 +97,5 @@ class Website():
 
             if not self.follow_links:
                 break
+
+            time.sleep(1)  # delay for 1 second

@@ -4,6 +4,7 @@ import os
 import re
 
 from bs4 import BeautifulSoup
+import requests
 from collections import Counter
 import lxml.html as lh
 from string import punctuation
@@ -93,7 +94,7 @@ class Page():
     Container for each page and the core analyzer.
     """
 
-    def __init__(self, url='', base_domain='', analyze_headings=True, analyze_extra_tags=True):
+    def __init__(self, url='', base_domain='', analyze_headings=True, analyze_extra_tags=True, analyze_generic_text=True):
         """
         Variables go here, *not* outside of __init__
         """
@@ -116,11 +117,35 @@ class Page():
         self.trigrams = Counter()
         self.stem_to_word = {}
         self.content_hash = None
+        self.analyze_generic_text = analyze_generic_text
+        self.generic_text = []
+        self.soup = self.get_soup()
 
         if analyze_headings:
             self.headings = {}
         if analyze_extra_tags:
             self.additional_info = {}
+
+    def construct_full_url(self, relative_path):
+        domain = self.base_domain.netloc
+
+        if domain[-1] == '/':
+            domain = domain[:-1]
+
+        if len(relative_path) > 0 and relative_path[0] == '?':
+            if '?' in self.url:
+                return f'{self.url[:self.url.index("?")]}{relative_path}'
+
+            return f'{self.url}{relative_path}'
+
+        if len(relative_path) > 0 and relative_path[0] != '/':
+            relative_path = f'/{relative_path}'
+
+        return f'{self.base_domain.scheme}://{domain}{relative_path}'
+
+    def get_soup(self):
+        response = requests.get(self.url)
+        return BeautifulSoup(response.text, 'html.parser')
 
     def talk(self):
         """
@@ -143,6 +168,9 @@ class Page():
             context['headings'] = self.headings
         if self.analyze_extra_tags:
             context['additional_info'] = self.additional_info
+
+        if self.analyze_generic_text:
+            context['generic_text'] = self.generic_text
 
         return context
 
@@ -269,6 +297,9 @@ class Page():
             self.analyze_heading_tags(soup_unmodified)
         if self.analyze_extra_tags:
             self.analyze_additional_tags(soup_unmodified)
+
+        if self.analyze_generic_text:
+            self.analyze_anchor_text(self.soup)
 
         return True
 
@@ -486,3 +517,21 @@ class Page():
 
     def warn(self, warning):
         self.warnings.append(warning)
+
+    def analyze_anchor_text(self, soup):
+        generic_texts = ["click here", "click this", "go", "here", "this", "start",
+                         "right here", "more", "learn more", "read more", "continue",
+                         "continue reading", "more info", "more information", "more details"]
+        for anchor in self.soup.find_all('a'):
+            href = anchor.get('href')
+            if href:
+                if href.startswith('http'):
+                    full_url = href
+                elif href.startswith('/'):
+                    full_url = f'{self.base_domain.scheme}://{self.base_domain.netloc}{href}'
+                else:
+                    full_url = self.construct_full_url(href)
+
+            anchor_text = anchor.text.lower()
+            if anchor_text in generic_texts:
+                self.generic_text.append(anchor_text)
